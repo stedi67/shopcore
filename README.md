@@ -1,0 +1,2 @@
+# shopcore
+Experimental shop kernel
