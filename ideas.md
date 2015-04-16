@@ -24,12 +24,28 @@ PRICE
 -----
 {amount:..., tax:..., taxref:..., annotation:...}
 
-CATALOG
--------
+CATALOG_ITEM
+------------
 {article_code:"....", meta_data:...}
+
+TAX_ADDRESS
+-----------
+a tax address is used to find out what kind of tax (if any) will be applied.
+For the simplified model, we ignore different taxes inside one country.
+buisiness_type: "b2c", "b2b"
+{country_code:"de" buisiness_type:"b2c"}
+
+COUNTRY
+-------
+allowed regions: "eu", "non-eu"
+{country_code:"de", region:"eu"}
 
 
 SAMPLE CLI SESSION
 ------------------
-> ADD TO CATALOG {article_code:"...",...}
-> ADD TO PRICELIST DIRECT_DE <article_code>:<price>
+> # create all tax related stuff here
+> ADD TO TAXES {tax_region:"de", physical:"false", buisiness_type:"b2c", rate:0.19, meta_data:{}};
+> ADD TO TAXES {tax_region:"de", physical:"true", buisiness_type:"b2c", rate:0.19, meta_data:{}};
+> ADD TO ARTICLES {article_code:"...", physical:"false"};
+> CREATE PRICELIST DIRECT_DE;
+> ADD TO PRICELIST DIRECT_DE {<article_code>:<catalog_price>};
