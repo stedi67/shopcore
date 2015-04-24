@@ -42,6 +42,29 @@ allowed regions: "eu", "non-eu"
 region: used for shipping
 {country_code:"de", region:"eu", tax_region:"de", allow_shipment:true}
 
+TAX_REGION
+----------
+this is the default tax region for above country definition
+{name:"de", country_code:"de", state_region:null, zip_postal_code:null}
+
+TAX
+---
+{tax_region:"de", goods_type:"physical", rate:0.19}
+{tax_region:"de", goods_type:"software", rate:0.19}
+{tax_region:"de", goods_type:"book", rate:0.07}
+
+DELIVERY
+--------
+{tax_region:"de", delivery_type:"taxed", accounting_data:{...}} # b2c?
+{tax_region:"de", delivery_type:"tax_free", accounting_data:{...}} # b2b?
+
+
+COMMANDS
+========
+
+proc tax_rate(tax_region:TaxRegion, goods_type:GoodsType):float
+proc price(catalog:Catalog, price_type:PriceType, tax_region:TaxRegion, delivery_type:DeliveryType, article_code:string):Price
+
 
 SAMPLE CLI SESSION
 ------------------

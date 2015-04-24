@@ -4,6 +4,9 @@ type
   BuisinessType = enum
     b2c, b2b
 
+  PriceType = enum
+    net, gross
+
   Currency = enum
     EUR, USD
 
@@ -15,9 +18,16 @@ type
     country_code, region, tax_region: string
     allow_shipment: bool
 
+  GoodsType = enum
+    physical, software, book
+
   Tax = object
     id: int
     tax_region: string
-    physical: bool
-    buisiness_type: BuisinessType
+    goods_type: GoodsType
     rate: float
+
+  Price = object
+    net_price: Money
+    tax: Money
+    tax_line: Tax
