@@ -9,7 +9,7 @@ import
 
 type
   Precision = int8
-  Decimal = tuple[value: int64, prec: Precision]
+  Decimal* = tuple[value: int64, prec: Precision]
 
 proc reverse(s: string): string =
   result = ""
