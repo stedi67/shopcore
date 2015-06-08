@@ -47,7 +47,7 @@ proc `>=`*[T,S](a: T, b: S): bool =
 proc toString(x: Decimal): string =
   result = ""
   let (num, prec) = x
-  var s = $num
+  var s = $abs(num)
   s = s.reverse
   var k = prec - s.len + 1
   while k>0:
@@ -65,6 +65,8 @@ proc toString(x: Decimal): string =
   result = result.reverse
   if result[0] == '.':
     result = "0" & result
+  if num < 0:
+    result = "-" & result
 
 proc `$`*(x: Decimal): string =
   return x.toString
@@ -101,16 +103,18 @@ proc `-`*(a, b:Decimal): Decimal =
 proc `*`*[T](a: T, b:Decimal): Decimal =
   result = (a*b.value, b.prec)
 
+proc `*`*(a, b:Decimal): Decimal =
+  result = (a.value*b.value, a.prec + b.prec)
+
 proc `==`*(a, b: Decimal): bool =
   result = a.value == b.value and a.prec == b.prec
 
 when isMainModule:
   echo "running assetions"
+  assert($newDecimal("0.1") == "0.1")
   assert($newDecimal("0.01") == "0.01")
   assert($newDecimal("1.00") == "1.00")
   assert($newDecimal("10.24") == "10.24")
-  let val = newDecimal("-1.0")
-  echo ($val)
   assert($newDecimal("-1.0") == "-1.0")
   assert($newDecimal("2.") == "2.")
   let a = to_precision((100.int64, 0.Precision), 1)
@@ -120,7 +124,18 @@ when isMainModule:
   assert((newDecimal("0.12") + newDecimal("1.32")) == newDecimal("1.44"))
   assert((newDecimal("0.120") + newDecimal("1.32")) != newDecimal("1.44"))
   let c = -2 * newDecimal("0.1")
-  echo ($c)
   assert((2 * newDecimal("0.1")) == newDecimal("0.2"))
   # fixme next
   assert((-2 * newDecimal("0.1")) == newDecimal("-0.2"))
+  assert(newDecimal("1.005").to_precision(2) == newDecimal("1.01"))
+  assert(newDecimal("1.0049").to_precision(2) == newDecimal("1.00"))
+  assert($c == "-0.2")
+  assert(newDecimal("1.1") > newDecimal("1.0"))
+  assert(newDecimal("-1.1") < newDecimal("-1.0"))
+  assert(newDecimal("1.1") >= newDecimal("1.0"))
+  assert(newDecimal("-1.1") <= newDecimal("-1.0"))
+  assert(newDecimal("1.1") >= newDecimal("1.1"))
+  assert(newDecimal("1.1") <= newDecimal("1.1"))
+  assert((newDecimal("0.12") - newDecimal("1.00")) == newDecimal("-0.88"))
+  assert((newDecimal("2.00") * newDecimal("2.00")) == newDecimal("4.0000"))
+  assert((newDecimal("100.00") * newDecimal("0.19")) == newDecimal("19.0000"))
