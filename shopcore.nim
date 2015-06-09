@@ -5,14 +5,14 @@ import
   pm_decimals
 
 type 
-  BuisinessType = enum
-    b2c, b2b
-
-  PriceType = enum
+  PriceType {.pure.} = enum
     net, gross
 
+  BuisinessType = enum
+    btB2C, btB2B
+
   Currency = enum
-    EUR="EUR", USD="USD"
+    curEur="EUR", curUsd="USD"
 
   Money = tuple[amount: Decimal, currency: Currency]
 
@@ -20,7 +20,7 @@ type
     country_code, region, tax_region: string
     allow_shipment: bool
 
-  GoodsType = enum
+  GoodsType {.pure.} = enum
     physical, software, book
 
   Tax = object
@@ -29,11 +29,26 @@ type
     goods_type: GoodsType
     rate: Decimal
 
-  Price = object
-    net_price: Money
-    tax: Money
-    tax_line: Tax
+  Price = tuple
+    raw: Money
+    taxRate: Decimal
+    priceType: PriceType
 
+  Article = object
+    name: string
+    goodsType: GoodsType
+
+  LineItem = object
+    b2bTax: Tax
+    b2cTax: Tax
+    price: Price
+    buisinessType: BuisinessType
+    article: Article
+    amount: int
+
+  LineItemRef = ref LineItem
+
+# money
 proc newMoney(value: string, currency:Currency): Money =
   result = (newDecimal(value), currency)
 
@@ -48,8 +63,45 @@ proc `-`(a, b:Money): Money =
   assert(a.currency == b.currency)
   result = (a.amount - b.amount, a.currency)
 
+# prices
+proc value*(price: Price): Decimal =
+  result = price.raw.amount
+
+proc gross*(price: Price): Money =
+  case price.priceType:
+    of PriceType.gross:
+      result = price.raw
+    of PriceType.net:
+      let prec = price.value.prec
+      let x = price.value
+      let rate = price.tax_rate
+      let new_value = (x + x * rate).toPrecision(x.prec)
+      result = (new_value, price.raw.currency)
+
+proc net*(price: Price): Money =
+  case price.priceType:
+    of PriceType.gross:
+      let prec = price.value.prec
+      let x = price.value
+      let rate = price.tax_rate
+      let new_value = (x - (x * rate * (inv (newDecimal("1.0")+rate)))).toPrecision(x.prec)
+      result = (new_value, price.raw.currency)
+    of PriceType.net:
+      result = price.raw
+
+proc tax*(price: Price): Money =
+  result = price.gross - price.net
+
 when isMainModule:
   echo "running assetions"
-  assert($newMoney("1.00", EUR) == "1.00 EUR")
-  assert((newMoney("1.00", EUR) + newMoney("1.00", EUR)) == newMoney("2.00", EUR))
-  assert((newMoney("2.00", EUR) - newMoney("1.05", EUR)) == newMoney("0.95", EUR))
+  assert($newMoney("1.00", curEur) == "1.00 EUR")
+  assert((newMoney("1.00", curEur) + newMoney("1.00", curEur)) == newMoney("2.00", curEur))
+  assert((newMoney("2.00", curEur) - newMoney("1.05", curEur)) == newMoney("0.95", curEur))
+  let price1 = (newMoney("100.00", curEur), newDecimal("0.19"), PriceType.net)
+  let price2 = (newMoney("119.00", curEur), newDecimal("0.19"), PriceType.gross)
+  assert(price1.gross == newMoney("119.00", curEur))
+  assert(price2.gross == newMoney("119.00", curEur))
+  assert(price1.net == newMoney("100.00", curEur))
+  assert(price2.net == newMoney("100.00", curEur))
+  assert(price1.tax == newMoney("19.00", curEur))
+  assert(price2.tax == newMoney("19.00", curEur))

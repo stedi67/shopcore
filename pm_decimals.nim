@@ -108,6 +108,27 @@ proc `==`*(a, b: Decimal): bool =
   let newB = b.toPrecision(prec)
   result = newA.value == newB.value and newA.prec == newB.prec
 
+proc inv*(a: Decimal): Decimal =
+  let factors = [1, 10, 100, 1000, 10_000, 100_000, 1_000_000, 10_000_000]
+  var
+    mult: int64
+    value: int64
+    prec: int8
+  if a < 1:
+    mult = factors[2*a.prec].int64
+    value = (mult div a.value)
+    prec = a.prec
+
+  else:
+    for i, x in factors.pairs:
+      if x > a.value:
+        let index = min(7, i+1+a.prec)
+        mult = factors[index].int64
+        value = (mult div a.value)
+        prec = index - a.prec
+        break
+  result = (value, prec)
+
 when isMainModule:
   echo "running assetions"
   assert($newDecimal("0.1") == "0.1")
@@ -138,3 +159,7 @@ when isMainModule:
   assert((newDecimal("0.12") - newDecimal("1.00")) == newDecimal("-0.88"))
   assert((newDecimal("2.00") * newDecimal("2.00")) == newDecimal("4.0000"))
   assert((newDecimal("100.00") * newDecimal("0.19")) == newDecimal("19.0000"))
+  assert((inv newDecimal("0.5")).toPrecision(1) == newDecimal("2.0"))
+  assert((inv newDecimal("125.0")).toPrecision(4) == newDecimal("0.008"))
+  assert((inv newDecimal("1.19")).toPrecision(2) == newDecimal("0.84"))
+  assert((newDecimal("22.61") * newDecimal("1.19").inv).toPrecision(2) == newDecimal("19.00"))
