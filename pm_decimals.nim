@@ -22,7 +22,7 @@ iterator digits(number: string): int =
       yield ord(c) - ord('0')
 
 proc newDecimal*(description: string): Decimal =
-  var value = 0.int64
+  var value = 0i64
   let fac = if description[0] == '-': -1
                                  else: 1
 
@@ -35,16 +35,23 @@ proc newDecimal*(description: string): Decimal =
   let val = (fac*value, prec)
   result = val
 
-proc `<`*(a, b: Decimal): bool =
-  return a.value < b.value
+proc toPrecision*(x: Decimal, prec: Precision): Decimal =
+  let factors = [1, 10, 100, 1000, 10_000, 100_000, 1_000_000, 10_000_000]
+  let m = x.prec - prec
+  let i = abs(m)
+  var newValue = 0i64
+  if m > 0:
+    let val = x.value div factors[i-1]
+    if (val - 5) div 10 != val div 10: # we would need to round down
+        newValue = val div 10
+    else: # rounding up
+        let diff = val - (val div 10) * 10
+        newValue = (val + diff) div 10
+  else:
+      newValue = x.value * factors[i]
+  result = (newValue, prec)
 
-proc `<`*[T](a: Decimal, b: T): bool =
-  return a.value < b
-
-proc `>=`*[T,S](a: T, b: S): bool =
-  return not (a < b)
-
-proc toString(x: Decimal): string =
+proc `$`*(x: Decimal): string =
   result = ""
   let (num, prec) = x
   var s = $abs(num)
@@ -68,31 +75,20 @@ proc toString(x: Decimal): string =
   if num < 0:
     result = "-" & result
 
-proc `$`*(x: Decimal): string =
-  return x.toString
+proc `<`*(a, b: Decimal): bool =
+  return a.value < b.value
 
+proc `<`*[T](a: Decimal, b: T): bool =
+  return a.value < b
 
-proc to_precision*(x: Decimal, prec: Precision): Decimal =
-  let factors = [1, 10, 100, 1000, 10_000, 100_000, 1_000_000, 10_000_000]
-  let m = x.prec - prec
-  let i = abs(m)
-  var new_value = 0.int64
-  if m > 0:
-    let val = x.value div factors[i-1]
-    if (val - 5) div 10 != val div 10: # we would need to round down
-        new_value = val div 10
-    else: # rounding up
-        let diff = val - (val div 10) * 10
-        new_value = (val + diff) div 10
-  else:
-      new_value = x.value * factors[i]
-  result = (new_value, prec)
+proc `>=`*[T,S](a: T, b: S): bool =
+  return not (a < b)
 
 proc `+`*(a, b:Decimal): Decimal =
   let prec = max(a.prec, b.prec)
-  let new_a = a.to_precision(prec)
-  let new_b = b.to_precision(prec)
-  result = (new_a.value + new_b.value, prec)
+  let newA = a.toPrecision(prec)
+  let newB = b.toPrecision(prec)
+  result = (newA.value + newB.value, prec)
 
 proc `-`*(a:Decimal): Decimal =
   result = (-a.value, a.prec)
@@ -107,7 +103,10 @@ proc `*`*(a, b:Decimal): Decimal =
   result = (a.value*b.value, a.prec + b.prec)
 
 proc `==`*(a, b: Decimal): bool =
-  result = a.value == b.value and a.prec == b.prec
+  let prec = max(a.prec, b.prec)
+  let newA = a.toPrecision(prec)
+  let newB = b.toPrecision(prec)
+  result = newA.value == newB.value and newA.prec == newB.prec
 
 when isMainModule:
   echo "running assetions"
@@ -117,18 +116,18 @@ when isMainModule:
   assert($newDecimal("10.24") == "10.24")
   assert($newDecimal("-1.0") == "-1.0")
   assert($newDecimal("2.") == "2.")
-  let a = to_precision((100.int64, 0.Precision), 1)
-  let b = (1000.int64, 1.Precision)
+  let a = toPrecision((100i64, 0.Precision), 1)
+  let b = (1000i64, 1.Precision)
   assert($a == $b)
   assert($a == "100.0")
   assert((newDecimal("0.12") + newDecimal("1.32")) == newDecimal("1.44"))
-  assert((newDecimal("0.120") + newDecimal("1.32")) != newDecimal("1.44"))
+  assert(newDecimal("0.120") == newDecimal("0.12"))
   let c = -2 * newDecimal("0.1")
   assert((2 * newDecimal("0.1")) == newDecimal("0.2"))
   # fixme next
   assert((-2 * newDecimal("0.1")) == newDecimal("-0.2"))
-  assert(newDecimal("1.005").to_precision(2) == newDecimal("1.01"))
-  assert(newDecimal("1.0049").to_precision(2) == newDecimal("1.00"))
+  assert(newDecimal("1.005").toPrecision(2) == newDecimal("1.01"))
+  assert(newDecimal("1.0049").toPrecision(2) == newDecimal("1.00"))
   assert($c == "-0.2")
   assert(newDecimal("1.1") > newDecimal("1.0"))
   assert(newDecimal("-1.1") < newDecimal("-1.0"))
