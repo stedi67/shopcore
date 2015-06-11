@@ -35,6 +35,7 @@ type
     priceType: PriceType
 
   Article = object
+    id: string
     name: string
     goodsType: GoodsType
 
