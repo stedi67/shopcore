@@ -17,7 +17,7 @@ type
   Money = tuple[amount: Decimal, currency: Currency]
 
   Country = object
-    country_code, region, tax_region: string
+    country_code: string
     allow_shipment: bool
 
   GoodsType {.pure.} = enum
@@ -28,6 +28,11 @@ type
     tax_region: string
     goods_type: GoodsType
     rate: Decimal
+
+  TaxAddress = object
+    postal_code: string
+    region: string
+    country_code: string
 
   Price = tuple
     raw: Money
@@ -45,9 +50,13 @@ type
     price: Price
     buisinessType: BuisinessType
     article: Article
-    amount: int
+    quantity: int
 
   LineItemRef = ref LineItem
+
+# tax region
+proc taxAddressToTaxRegion(address: TaxAddress): string =
+  result = address.country_code
 
 # money
 proc newMoney(value: string, currency:Currency): Money =
@@ -106,3 +115,5 @@ when isMainModule:
   assert(price2.net == newMoney("100.00", curEur))
   assert(price1.tax == newMoney("19.00", curEur))
   assert(price2.tax == newMoney("19.00", curEur))
+  let address = TaxAddress(postal_code:"10407", region:"Berlin", country_code:"de")
+  assert(address.country_code == taxAddressToTaxRegion(address))
