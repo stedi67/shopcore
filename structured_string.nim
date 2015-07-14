@@ -29,8 +29,8 @@ macro StructuredString(name: string{lit}, definition: string{lit}): stmt {.immed
     low = low + fieldLen
   result.add(parseStmt(newFuncText % [name.strVal, name.strVal.capitalize, $high]))
 
-let acdef = """
-product_id:4,
+StructuredString("SoftwareArticleCode", "")
+discard """product_id:4,
 version:2,
 channel:2,
 right:2,
@@ -41,12 +41,10 @@ num_instances:1,
 serial_number_type:1,
 language:2,
 customer_group_discount:2,
-license_dependent_discount:2
-"""
-StructuredString("SoftwareArticleCode", "a:2")
+license_dependent_discount:2"""
 
 when isMainModule:
-  StructuredString("test", 10, "a:5, b:5")
+  StructuredString("test", "a:5, b:5")
 
   var foo = newTest("aaaaabbbbb")
 
