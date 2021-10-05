@@ -8,7 +8,7 @@ type
   PriceType {.pure.} = enum
     net, gross
 
-  BuisinessType = enum
+  BusinessType = enum
     btB2C, btB2B
 
   Currency = enum
@@ -48,7 +48,7 @@ type
     b2bTax: Tax
     b2cTax: Tax
     price: Price
-    buisinessType: BuisinessType
+    businessType: BusinessType
     article: Article
     quantity: int
 
@@ -82,7 +82,6 @@ proc gross*(price: Price): Money =
     of PriceType.gross:
       result = price.raw
     of PriceType.net:
-      let prec = price.value.prec
       let x = price.value
       let rate = price.tax_rate
       let new_value = (x + x * rate).toPrecision(x.prec)
@@ -91,7 +90,6 @@ proc gross*(price: Price): Money =
 proc net*(price: Price): Money =
   case price.priceType:
     of PriceType.gross:
-      let prec = price.value.prec
       let x = price.value
       let rate = price.tax_rate
       let new_value = (x - (x * rate * (inv (newDecimal("1.0")+rate)))).toPrecision(x.prec)

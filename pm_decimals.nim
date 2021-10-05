@@ -125,7 +125,7 @@ proc inv*(a: Decimal): Decimal =
         let index = min(7, i+1+a.prec)
         mult = factors[index].int64
         value = (mult div a.value)
-        prec = index - a.prec
+        prec = index.int8 - a.prec
         break
   result = (value, prec)
 
